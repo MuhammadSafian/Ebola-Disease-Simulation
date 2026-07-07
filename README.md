@@ -30,7 +30,7 @@ This project is a comprehensive web-based simulation platform designed to model 
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repository-url>
+   git clone https://github.com/MuhammadSafian/Ebola-Disease-Simulation.git
    cd ABM--ANN-PROJECT
    ```
 
