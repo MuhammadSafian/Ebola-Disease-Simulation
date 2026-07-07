@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ebola Disease Spread Simulation using Agent-Based Modeling and Single Layer Perceptron">
+    <title>Ebola ABM + SLP Disease Spread Simulation</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Disease spread simulation</h1>
+        <span class="badge badge-abm active" id="badgeABM">ABM</span>
+        <span class="badge badge-ann" id="badgeANN">ANN</span>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Ready — click Start to begin</span>
+    </div>
+
+    <!-- KPI Bar -->
+    <div class="kpi-bar">
+        <div class="kpi-card kpi-healthy">
+            <div class="kpi-label">Healthy</div>
+            <div class="kpi-value" id="kpiHealthy">0</div>
+        </div>
+        <div class="kpi-card kpi-exposed">
+            <div class="kpi-label">Exposed</div>
+            <div class="kpi-value" id="kpiExposed">0</div>
+        </div>
+        <div class="kpi-card kpi-infected">
+            <div class="kpi-label">Infected</div>
+            <div class="kpi-value" id="kpiInfected">0</div>
+        </div>
+        <div class="kpi-card kpi-recovered">
+            <div class="kpi-label">Recovered</div>
+            <div class="kpi-value" id="kpiRecovered">0</div>
+        </div>
+        <div class="kpi-card kpi-dead">
+            <div class="kpi-label">Dead</div>
+            <div class="kpi-value" id="kpiDead">0</div>
+        </div>
+        <div class="kpi-card kpi-day">
+            <div class="kpi-label">Day</div>
+            <div class="kpi-value" id="kpiDay">0</div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot dot-healthy"></div> Healthy</div>
+        <div class="legend-item"><div class="legend-dot dot-exposed"></div> Exposed</div>
+        <div class="legend-item"><div class="legend-dot dot-infected"></div> Infected</div>
+        <div class="legend-item"><div class="legend-dot dot-recovered"></div> Recovered</div>
+        <div class="legend-item"><div class="legend-dot dot-dead"></div> Dead</div>
+    </div>
+
+    <!-- Main Grid: Canvas + Chart -->
+    <div class="main-grid">
+        <div class="card">
+            <div class="card-title"><span class="icon">🧬</span> Agent simulation (ABM)</div>
+            <div class="canvas-wrapper">
+                <canvas id="agentCanvas" width="500" height="500"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title"><span class="icon">📈</span> Spread over time</div>
+            <div class="chart-container">
+                <canvas id="spreadChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-section">
+        <div class="controls-card">
+            <!-- Country Selector -->
+            <div class="country-row">
+                <label>Country:</label>
+                <button class="country-btn active" data-country="Guinea" id="btnGuinea">🇬🇳 Guinea</button>
+                <button class="country-btn" data-country="Liberia" id="btnLiberia">🇱🇷 Liberia</button>
+                <button class="country-btn" data-country="Sierra Leone" id="btnSierraLeone">🇸🇱 Sierra Leone</button>
+            </div>
+
+            <!-- Sliders -->
+            <div class="sliders-row">
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Population</span>
+                        <span class="slider-val" id="popVal">5000</span>
+                    </div>
+                    <input type="range" id="sliderPop" min="100" max="5000" value="5000" step="100">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Infection rate</span>
+                        <span class="slider-val" id="infVal">15%</span>
+                    </div>
+                    <input type="range" id="sliderInf" min="1" max="100" value="15">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Initial infected</span>
+                        <span class="slider-val" id="initInfVal">3</span>
+                    </div>
+                    <input type="range" id="sliderInitInf" min="1" max="100" value="3">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>Sim speed</span>
+                        <span class="slider-val" id="speedVal">Normal</span>
+                    </div>
+                    <input type="range" id="sliderSpeed" min="1" max="3" value="2">
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons-row">
+                <button class="btn btn-start" id="btnStart">▶ Start</button>
+                <button class="btn btn-pause" id="btnPause" disabled>⏸ Pause</button>
+                <button class="btn btn-reset" id="btnReset">↻ Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANN Risk Cards -->
+    <div class="risk-section">
+        <div class="card">
+            <div class="card-title"><span class="icon">🌐</span> ANN infection risk prediction (top 10 agents)</div>
+            <div class="risk-grid" id="riskGrid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SLP Info + Real Data Chart -->
+    <div class="main-grid">
+        <div class="card slp-section-card">
+            <div class="card-title"><span class="icon">🧠</span> SLP (Perceptron) Details</div>
+            <div id="slpDetails">
+                <div class="slp-stat"><span class="slp-stat-label">Status</span><span class="slp-stat-value" id="slpStatus">Not trained</span></div>
+                <div class="slp-stat"><span class="slp-stat-label">Accuracy</span><span class="slp-stat-value" id="slpAccuracy">—</span></div>
+                <div class="slp-stat"><span class="slp-stat-label">Final Loss</span><span class="slp-stat-value" id="slpLoss">—</span></div>
+                <div class="slp-stat"><span class="slp-stat-label">Epochs</span><span class="slp-stat-value" id="slpEpochs">—</span></div>
+                <div class="slp-stat"><span class="slp-stat-label">Weights</span><span class="slp-stat-value" id="slpWeights" style="font-size:11px">—</span></div>
+            </div>
+            <div class="chart-container" style="height:200px;margin-top:16px">
+                <canvas id="lossChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title"><span class="icon">📊</span> Real Ebola data — <span id="ebolaCountryLabel">Guinea</span></div>
+            <div class="chart-container">
+                <canvas id="ebolaChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Ebola ABM + SLP Simulation — MS Project · WHO Dataset 2014–2016
+    </div>
+
+    <!-- JS Files -->
+    <script src="/static/js/sim.js"></script>
+    <script src="/static/js/charts.js"></script>
+    <script src="/static/js/ui.js"></script>
+</body>
+</html>
